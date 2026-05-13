@@ -43,12 +43,12 @@ Respond ONLY in this exact JSON with no other text:
         raise ValueError(f"RCA parse failed: {response_text}")
 
 if __name__ == "__main__":
-    from anomaly_detector import detect_anomalies
+    from anomaly_detector import run_detector
     from noise_filter import filter_noise
     from memory_store import get_past_incidents
     
     print("Detecting anomalies...")
-    alerts = detect_anomalies()
+    alerts = run_detector()
     
     if alerts:
         first_alert = alerts[0]

@@ -1,6 +1,6 @@
 import json
 from llm_client import call_llm
-from anomaly_detector import detect_anomalies
+from anomaly_detector import run_detector
 
 def filter_noise(alert):
     system_prompt = """You are an alert triage system. Your only job is to 
@@ -32,7 +32,7 @@ Respond ONLY in this exact JSON with no other text:
         }
 
 if __name__ == "__main__":
-    alerts = detect_anomalies()
+    alerts = run_detector()
     if alerts:
         first_alert = alerts[0]
         result = filter_noise(first_alert)
