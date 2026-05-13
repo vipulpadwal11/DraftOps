@@ -17,7 +17,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (supabase) {
       fetchIncidents();
-      // Auto-refresh every 30 seconds
       const interval = setInterval(fetchIncidents, 30000);
       return () => clearInterval(interval);
     } else {
@@ -43,13 +42,8 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-500 tracking-tighter uppercase">
-            Ops
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center font-mono">
+        <div className="text-[#CC6B49] animate-pulse">Initializing DraftOps...</div>
       </div>
     );
   }
@@ -71,32 +65,30 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-100/50 via-transparent to-transparent text-gray-900 font-sans selection:bg-blue-200">
-      {/* Background Grid Decor */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-[#FAF9F5] text-[#3B3836] font-mono selection:bg-[#F2EFEA]">
+      <div className="max-w-5xl mx-auto px-6 py-16">
+        
         {/* Header */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500">Pipeline Active</span>
-            </div>
-            <h1 className="text-4xl font-outfit font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-500">
-              DraftOps <span className="text-blue-600 font-medium">Pulse</span>
+            <h1 className="text-3xl font-medium tracking-tight text-[#1E1D1B] mb-2">
+              DraftOps
             </h1>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-[#CC6B49] rounded-full animate-pulse"></div>
+              <span className="text-sm text-[#7A756C]">Autonomous Incident Monitoring</span>
+            </div>
           </div>
           
-          <div className="flex items-center gap-4 bg-white p-1.5 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-2 bg-[#F0EEE6] p-1 rounded-lg">
             {["all", "P1", "P2"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest ${
+                className={`px-4 py-1.5 rounded-md text-xs transition-all ${
                   activeTab === tab 
-                    ? "bg-gray-900 text-white shadow-md" 
-                    : "text-gray-500 hover:text-gray-900"
+                    ? "bg-white text-[#1E1D1B] shadow-sm" 
+                    : "text-[#7A756C] hover:text-[#1E1D1B]"
                 }`}
               >
                 {tab === "all" ? "Overview" : tab}
@@ -106,24 +98,23 @@ export default function Dashboard() {
         </header>
 
         {/* Hero Stats */}
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-16">
           <StatCard label="Live Incidents" value={incidents.length} sub="Total ingested" />
-          <StatCard label="Critical Issues" value={p1Count} sub="P1 priority" color="text-red-600" />
+          <StatCard label="Critical Issues" value={p1Count} sub="P1 priority" color="text-[#D94A38]" />
           <StatCard label="Affected Services" value={uniqueServices} sub="Real-time count" />
-          <StatCard label="Latest Incident" value={getLatestTime()} sub="Last detection" color="text-blue-600" isTextValue={true} />
+          <StatCard label="Latest Incident" value={getLatestTime()} sub="Last detection" color="text-[#CC6B49]" />
         </section>
 
         {/* Incident List */}
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+        <div className="space-y-6">
+          <h2 className="text-lg font-medium text-[#1E1D1B] mb-2 border-b border-[#E5E1D8] pb-4">Activity Feed</h2>
+          
           {filteredIncidents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 bg-white rounded-3xl border border-gray-200 border-dashed shadow-sm">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <span className="text-xl text-gray-400">✓</span>
-              </div>
-              <p className="text-gray-500 font-medium">No {activeTab !== "all" ? activeTab : ""} incidents detected.</p>
+            <div className="flex flex-col items-center justify-center py-24 bg-white rounded-xl border border-[#E5E1D8]">
+              <p className="text-[#7A756C]">No {activeTab !== "all" ? activeTab : ""} incidents detected.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {filteredIncidents.map((incident) => (
                 <IncidentCard 
                   key={incident.id} 
@@ -137,11 +128,11 @@ export default function Dashboard() {
         </div>
 
         {/* Footer info */}
-        <footer className="mt-20 pt-8 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-          <p>© 2026 DraftOps Autonomous Systems</p>
-          <div className="flex gap-6">
-            <span className="flex items-center gap-1.5"><div className="w-1 h-1 bg-blue-500 rounded-full"></div> Supabase Sync</span>
-            <span className="flex items-center gap-1.5"><div className="w-1 h-1 bg-purple-500 rounded-full"></div> LangGraph RCA</span>
+        <footer className="mt-24 pt-8 border-t border-[#E5E1D8] flex justify-between items-center text-xs text-[#7A756C]">
+          <p>© 2026 DraftOps</p>
+          <div className="flex gap-4">
+            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#8DA399] rounded-full"></div> Supabase</span>
+            <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-[#CC6B49] rounded-full"></div> LangGraph</span>
           </div>
         </footer>
       </div>
@@ -149,15 +140,12 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ label, value, sub, color = "text-gray-900", isTextValue = false }) {
+function StatCard({ label, value, sub, color = "text-[#1E1D1B]" }) {
   return (
-    <div className="group relative overflow-hidden bg-white shadow-sm p-8 rounded-[2rem] border border-gray-200 hover:border-gray-300 transition-all duration-500 hover:-translate-y-1 hover:shadow-md">
-      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-        <div className="w-20 h-20 bg-gray-900 rounded-full"></div>
-      </div>
-      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4">{label}</p>
-      <p className={`${isTextValue ? 'text-3xl mt-2 mb-4' : 'text-5xl mb-2'} font-outfit font-black tracking-tighter ${color}`}>{value}</p>
-      <p className="text-xs text-gray-500 font-medium">{sub}</p>
+    <div className="bg-white p-6 rounded-xl border border-[#E5E1D8] hover:border-[#D1CCC2] transition-colors">
+      <p className="text-xs text-[#7A756C] mb-3">{label}</p>
+      <p className={`text-2xl font-medium mb-1 ${color}`}>{value}</p>
+      <p className="text-xs text-[#9E988F]">{sub}</p>
     </div>
   );
 }
@@ -166,111 +154,97 @@ function IncidentCard({ incident, isExpanded, onToggle }) {
   const isP1 = incident.severity === "P1";
   
   return (
-    <div className={`group relative overflow-hidden rounded-[2.5rem] border transition-all duration-500 ${
-      isExpanded ? "ring-2 ring-blue-500/20 bg-blue-50/30" : "bg-white hover:bg-gray-50 shadow-sm hover:shadow"
-    } ${isP1 ? "border-red-200 hover:border-red-300" : "border-gray-200 hover:border-gray-300"}`}>
-      
-      {/* Accent strip */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isP1 ? "bg-red-500" : "bg-blue-500"}`}></div>
-
-      <div className="p-8 md:p-10">
-        <div className="flex flex-wrap justify-between items-start gap-6 mb-8">
-          <div className="space-y-3">
+    <div className={`bg-white rounded-xl border transition-all duration-200 ${
+      isExpanded ? "border-[#D1CCC2] shadow-sm" : "border-[#E5E1D8] hover:border-[#D1CCC2]"
+    }`}>
+      <div className="p-6">
+        <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
+          <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <h3 className="text-2xl font-outfit font-bold tracking-tight text-gray-900 group-hover:text-blue-600 transition-colors">
+              <h3 className="text-lg font-medium text-[#1E1D1B]">
                 {incident.service}
               </h3>
-              <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                isP1 ? "bg-red-50 text-red-600 border-red-200" : "bg-blue-50 text-blue-600 border-blue-200"
+              <div className={`px-2 py-0.5 rounded text-xs ${
+                isP1 ? "bg-[#FDF2F0] text-[#D94A38] border border-[#FADBD8]" : "bg-[#F2EFEA] text-[#7A756C] border border-[#E5E1D8]"
               }`}>
                 {incident.severity}
               </div>
               {incident.incident_type && incident.incident_type !== "unknown" && (
-                <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-600 border border-gray-200">
+                <div className="text-xs text-[#9E988F]">
                   {incident.incident_type.replace(/_/g, " ")}
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              <span className="flex items-center gap-1.5">
-                <span className="text-blue-500">#</span> {incident.id.toString().slice(-6)}
-              </span>
+            <div className="flex items-center gap-3 text-xs text-[#9E988F]">
+              <span>ID: {incident.id.toString().slice(-6)}</span>
               <span>•</span>
               <span>{new Date(incident.triggered_at).toLocaleString(undefined, { 
-                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
               })}</span>
             </div>
           </div>
 
           {incident.needs_escalation && (
-            <div className="animate-pulse flex items-center gap-2 px-6 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
-              <span>⚠</span> Critical Escalation
+            <div className="flex items-center gap-2 text-xs text-[#D94A38] bg-[#FDF2F0] px-3 py-1.5 rounded-md border border-[#FADBD8]">
+              <span className="w-1.5 h-1.5 bg-[#D94A38] rounded-full animate-pulse"></span> Escalation Required
             </div>
           )}
         </div>
 
-        <div className="space-y-6">
-          <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 shadow-inner">
-            <p className="text-xl font-medium leading-relaxed text-gray-800">
-              {incident.probable_cause}
-            </p>
-          </div>
+        <div className="space-y-4">
+          <p className="text-sm text-[#3B3836] leading-relaxed">
+            {incident.probable_cause}
+          </p>
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 w-8 h-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold shrink-0 shadow-sm">
-                →
-              </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+            <div className="flex items-start gap-3">
+              <div className="text-[#CC6B49] mt-0.5">↳</div>
               <div>
-                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Recommended Action</p>
-                <p className="text-gray-600 font-medium">{incident.recommended_action}</p>
+                <p className="text-xs text-[#CC6B49] mb-0.5">Recommendation</p>
+                <p className="text-sm text-[#5C5852]">{incident.recommended_action}</p>
               </div>
             </div>
 
             <button 
               onClick={onToggle}
-              className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-sm ${
-                isExpanded 
-                  ? "bg-gray-900 text-white hover:bg-gray-800" 
-                  : "bg-white text-gray-900 hover:bg-gray-50 border border-gray-200"
-              }`}
+              className="px-4 py-2 rounded-lg text-xs bg-[#F0EEE6] hover:bg-[#E5E1D8] text-[#3B3836] transition-colors shrink-0"
             >
-              {isExpanded ? "Close Report" : "Technical RCA"}
+              {isExpanded ? "Hide Details" : "View Details"}
             </button>
           </div>
         </div>
 
         {/* Technical Detail Section */}
         {isExpanded && (
-          <div className="mt-10 pt-10 border-t border-gray-200 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                  <span className="w-1 h-1 bg-purple-500 rounded-full"></span> Diagnostic Reasoning
-                </p>
-                <div className="space-y-4 text-gray-600 text-sm leading-relaxed font-medium">
+          <div className="mt-6 pt-6 border-t border-[#E5E1D8]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="md:col-span-2">
+                <p className="text-xs text-[#7A756C] mb-4 border-b border-[#E5E1D8] pb-2">Reasoning Trace</p>
+                <div className="space-y-3 text-sm text-[#5C5852] leading-relaxed">
                   {incident.reasoning.split('. ').map((sentence, idx) => (
-                    sentence && <p key={idx} className="flex gap-3"><span className="text-gray-400 shrink-0">0{idx+1}</span> {sentence}.</p>
+                    sentence && (
+                      <div key={idx} className="flex gap-3">
+                        <span className="text-[#D1CCC2]">{(idx+1).toString().padStart(2, '0')}</span> 
+                        <p>{sentence}.</p>
+                      </div>
+                    )
                   ))}
                 </div>
               </div>
-              <div className="bg-white shadow-inner border border-gray-100 rounded-3xl p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-5">
-                  <span className="text-4xl font-black italic tracking-tighter text-gray-900">AI</span>
-                </div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6">Autonomous Triage</p>
-                <div className="space-y-4 font-mono text-[11px]">
-                  <div className="flex justify-between border-b border-gray-100 pb-2">
-                    <span className="text-gray-500">Model:</span>
-                    <span className="text-blue-600 font-semibold">LLAMA-3.3-70B</span>
+              <div className="bg-[#FAF9F5] rounded-lg p-5 border border-[#E5E1D8] h-fit">
+                <p className="text-xs text-[#7A756C] mb-4">Metadata</p>
+                <div className="space-y-3 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-[#9E988F]">Model</span>
+                    <span className="text-[#3B3836]">llama-3.3-70b</span>
                   </div>
-                  <div className="flex justify-between border-b border-gray-100 pb-2">
-                    <span className="text-gray-500">Confidence:</span>
-                    <span className="text-green-600 font-semibold">{incident.confidence?.toUpperCase() || "HIGH"}</span>
+                  <div className="flex justify-between">
+                    <span className="text-[#9E988F]">Confidence</span>
+                    <span className="text-[#8DA399]">{incident.confidence?.toUpperCase() || "HIGH"}</span>
                   </div>
-                  <div className="flex justify-between border-b border-gray-100 pb-2">
-                    <span className="text-gray-500">Context Size:</span>
-                    <span className="text-gray-600 font-semibold">1.2k tokens</span>
+                  <div className="flex justify-between">
+                    <span className="text-[#9E988F]">Context Size</span>
+                    <span className="text-[#3B3836]">1.2k tokens</span>
                   </div>
                 </div>
               </div>
