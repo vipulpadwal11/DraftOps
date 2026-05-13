@@ -1,0 +1,15 @@
+# Ignore all Python/Backend files
+*.py
+requirements.txt
+Procfile
+live_logs.json
+mock_logs.json
+anomaly_detector/
+noise_filter/
+rca_agent/
+action_executor/
+memory_store/
+__pycache__/
+.venv/
+venv/
+env/
