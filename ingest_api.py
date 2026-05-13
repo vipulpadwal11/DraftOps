@@ -18,10 +18,10 @@ class LogEntry(BaseModel):
     service: str
     level: str
     message: str
-    cpu_usage: Optional[float] = 0
-    memory_usage: Optional[float] = 0
-    error_rate: Optional[float] = 0
-    latency_ms: Optional[float] = 0
+    cpu_usage: float = 0
+    memory_usage: float = 0
+    error_rate: float = 0
+    latency_ms: float = 0
 
 def get_all_logs() -> List[dict]:
     if not os.path.exists(LOG_FILE):
