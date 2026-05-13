@@ -1,5 +1,6 @@
 import os
 import time
+import json
 from typing import TypedDict, List, Dict, Any, Optional
 from langgraph.graph import StateGraph, START, END
 from dotenv import load_dotenv
@@ -26,7 +27,23 @@ class AgentState(TypedDict):
 def node_detect_anomalies(state: AgentState):
     log_source = os.getenv("LOG_SOURCE", "mock")
     source_file = "live_logs.json" if log_source == "live" else "mock_logs.json"
+    
+    print(f"Reading from: {source_file}")
+    
+    # Get log count for debugging
+    try:
+        if os.path.exists(source_file):
+            with open(source_file, "r") as f:
+                logs_data = json.load(f)
+                print(f"Total logs found: {len(logs_data)}")
+        else:
+            print(f"Total logs found: 0 (File does not exist)")
+    except Exception as e:
+        print(f"Error reading log count: {e}")
+
     alerts = run_detector(source_file=source_file)
+    print(f"Alerts found: {len(alerts)}")
+    
     if not alerts:
         return {"pipeline_stopped": True}
     return {
