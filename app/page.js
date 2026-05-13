@@ -18,11 +18,15 @@ export default function Dashboard() {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
+    console.log("Supabase Client Status:", supabase ? "Initialized" : "Missing Credentials");
+    if (!supabaseUrl) console.warn("NEXT_PUBLIC_SUPABASE_URL is missing");
+    if (!supabaseAnonKey) console.warn("NEXT_PUBLIC_SUPABASE_ANON_KEY is missing");
+
     if (supabase) {
       fetchIncidents();
     } else {
       setLoading(false);
-      console.error("Supabase credentials missing in .env.local");
+      console.error("Supabase credentials missing! Check your Vercel/Local environment variables.");
     }
   }, []);
 
@@ -33,10 +37,15 @@ export default function Dashboard() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase Query Error:", error);
+        throw error;
+      }
+      
+      console.log(`Successfully fetched ${data?.length || 0} incidents.`);
       setIncidents(data || []);
     } catch (err) {
-      console.error("Error fetching incidents:", err);
+      console.error("Critical error in fetchIncidents:", err);
     } finally {
       setLoading(false);
     }
