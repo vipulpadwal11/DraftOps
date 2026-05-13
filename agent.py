@@ -26,8 +26,9 @@ class AgentState(TypedDict):
 
 def node_detect_anomalies(state: AgentState):
     log_source = os.getenv("LOG_SOURCE", "mock")
-    source_file = "live_logs.json" if log_source == "live" else "mock_logs.json"
+    source_file = "/tmp/live_logs.json" if log_source == "live" else "mock_logs.json"
     
+    print(f"LOG_SOURCE: {log_source}")
     print(f"Reading from: {source_file}")
     
     # Get log count for debugging

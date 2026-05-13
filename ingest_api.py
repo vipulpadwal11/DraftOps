@@ -11,7 +11,7 @@ load_dotenv()
 
 app = FastAPI(title="DraftOps Ingest API")
 
-LOG_FILE = "live_logs.json"
+LOG_FILE = "/tmp/live_logs.json"
 
 class LogEntry(BaseModel):
     project_id: str
