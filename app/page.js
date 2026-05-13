@@ -12,12 +12,12 @@ export default function Dashboard() {
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [activeNav, setActiveNav] = useState("dashboard");
 
   useEffect(() => {
     if (supabase) {
       fetchIncidents();
-      // Auto-refresh every 30 seconds
       const interval = setInterval(fetchIncidents, 30000);
       return () => clearInterval(interval);
     } else {
@@ -34,6 +34,7 @@ export default function Dashboard() {
 
       if (error) throw error;
       setIncidents(data || []);
+      setLastUpdated(new Date());
     } catch (err) {
       console.error("Error fetching incidents:", err);
     } finally {
@@ -41,230 +42,251 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-          <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-500 tracking-tighter uppercase">
-            Ops
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const filteredIncidents = activeTab === "all" ? incidents : incidents.filter(i => i.severity === activeTab);
-  const p1Count = incidents.filter(i => i.severity === "P1").length;
+  const p1Incidents = incidents.filter(i => i.severity === "P1");
+  const uniqueServices = Array.from(new Set(incidents.map((i) => i.service)));
 
   return (
-    <div className="min-h-screen bg-[#050505] bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent text-white font-sans selection:bg-blue-500/30">
-      {/* Background Grid Decor */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500">Pipeline Active</span>
-            </div>
-            <h1 className="text-4xl font-outfit font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-gray-500">
-              DraftOps <span className="text-blue-500 font-medium">Pulse</span>
-            </h1>
+    <div className="flex min-h-screen bg-[#0a0a0a] text-white font-sans">
+      {/* Sidebar */}
+      <aside className="fixed inset-y-0 left-0 w-64 border-r border-[#222] bg-[#0a0a0a] flex flex-col z-20">
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg border border-gray-600 flex items-center justify-center shadow-sm">
+            <span className="font-bold text-lg leading-none tracking-tighter">D</span>
           </div>
+          <span className="font-semibold text-lg tracking-tight">DraftOps</span>
+        </div>
+        
+        <nav className="flex-1 px-4 py-2 space-y-1">
+          <NavItem 
+            icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" 
+            label="Dashboard" 
+            isActive={activeNav === "dashboard"}
+            onClick={() => setActiveNav("dashboard")}
+          />
+          <NavItem 
+            icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+            label="Incidents" 
+            isActive={activeNav === "incidents"}
+            onClick={() => setActiveNav("incidents")}
+            badge={p1Incidents.length > 0 ? p1Incidents.length : null}
+          />
+          <NavItem 
+            icon="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" 
+            label="Services" 
+            isActive={activeNav === "services"}
+            onClick={() => setActiveNav("services")}
+          />
+        </nav>
+        
+        <div className="p-4 border-t border-[#222]">
+          <div className="flex items-center gap-3 px-2 py-2 text-sm text-gray-500 hover:text-gray-300 cursor-pointer transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Settings
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 ml-64 min-h-screen">
+        <div className="max-w-6xl mx-auto px-8 py-8">
           
-          <div className="flex items-center gap-4 bg-[#111] p-1.5 rounded-xl border border-white/5 shadow-2xl">
-            {["all", "P1", "P2"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest ${
-                  activeTab === tab 
-                    ? "bg-white text-black shadow-lg" 
-                    : "text-gray-500 hover:text-white"
-                }`}
-              >
-                {tab === "all" ? "Overview" : tab}
-              </button>
-            ))}
-          </div>
-        </header>
-
-        {/* Hero Stats */}
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
-          <StatCard label="Live Incidents" value={incidents.length} sub="Total ingested" />
-          <StatCard label="Critical Issues" value={p1Count} sub="P1 priority" color="text-red-500" />
-          <StatCard label="MTTR" value="14m" sub="Last 24h average" />
-          <StatCard label="Uptime" value="99.98%" sub="All services" color="text-green-500" />
-        </section>
-
-        {/* Incident List */}
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
-          {filteredIncidents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 bg-[#0a0a0a] rounded-3xl border border-white/5 border-dashed">
-              <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center mb-4">
-                <span className="text-xl text-gray-700">✓</span>
-              </div>
-              <p className="text-gray-500 font-medium">No {activeTab !== "all" ? activeTab : ""} incidents detected.</p>
+          {/* Header */}
+          <header className="flex justify-between items-end mb-10 pb-6 border-b border-[#222]">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-gray-100">Incident Monitor</h1>
+              <p className="text-sm text-gray-500 mt-1">Real-time anomaly detection and root cause analysis.</p>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {filteredIncidents.map((incident) => (
-                <IncidentCard 
+            
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2 bg-[#111] border border-[#222] px-3 py-1.5 rounded-full shadow-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+                <span className="text-xs font-medium text-gray-300">Live</span>
+              </div>
+              <span className="text-[11px] text-gray-600 font-medium">
+                {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Connecting...'}
+              </span>
+            </div>
+          </header>
+
+          {/* Stats Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            {/* Total Incidents */}
+            <div className="bg-[#111]/80 backdrop-blur-xl border border-[#222] rounded-2xl p-6 relative overflow-hidden group hover:border-[#333] transition-colors">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Total Incidents</h3>
+              <div className="text-4xl font-semibold text-white tracking-tight">{incidents.length}</div>
+            </div>
+
+            {/* P1 Critical */}
+            <div className="bg-[#111]/80 backdrop-blur-xl border border-[#222] rounded-2xl p-6 relative overflow-hidden group hover:border-[#333] transition-colors">
+               <div className="absolute inset-0 bg-gradient-to-b from-red-500/[0.03] to-transparent pointer-events-none"></div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">P1 Critical</h3>
+              <div className="text-4xl font-semibold text-red-500 tracking-tight">{p1Incidents.length}</div>
+            </div>
+
+            {/* Services Affected */}
+            <div className="bg-[#111]/80 backdrop-blur-xl border border-[#222] rounded-2xl p-6 relative overflow-hidden group hover:border-[#333] transition-colors flex flex-col">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Services Affected</h3>
+              <div className="text-4xl font-semibold text-white tracking-tight mb-3">{uniqueServices.length}</div>
+              <div className="flex flex-wrap gap-2 mt-auto">
+                {uniqueServices.slice(0, 3).map(service => (
+                  <span key={service} className="text-[10px] px-2 py-1 rounded bg-[#222] text-gray-400 font-medium truncate max-w-[80px]">
+                    {service}
+                  </span>
+                ))}
+                {uniqueServices.length > 3 && (
+                  <span className="text-[10px] px-2 py-1 rounded bg-[#222] text-gray-400 font-medium">
+                    +{uniqueServices.length - 3}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Incident Feed */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-medium text-gray-400 mb-4 px-1">Recent Activity</h2>
+            
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-[#0f0f0f] border border-[#222] rounded-xl h-32 animate-pulse relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#222]"></div>
+                    <div className="p-6 ml-1 space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-4 bg-[#222] rounded w-32"></div>
+                        <div className="h-4 bg-[#222] rounded w-16"></div>
+                      </div>
+                      <div className="h-3 bg-[#222] rounded w-3/4"></div>
+                      <div className="h-3 bg-[#222] rounded w-1/2"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : incidents.length === 0 ? (
+              <div className="bg-[#0f0f0f] border border-[#222] rounded-2xl py-24 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4 border border-green-500/20">
+                  <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h3 className="text-lg font-medium text-green-500 mb-1">All systems operational</h3>
+                <p className="text-sm text-gray-500">No incidents in the last 24 hours</p>
+              </div>
+            ) : (
+              incidents.map((incident) => (
+                <IncidentRow 
                   key={incident.id} 
                   incident={incident} 
                   isExpanded={expandedId === incident.id}
                   onToggle={() => setExpandedId(expandedId === incident.id ? null : incident.id)}
                 />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer info */}
-        <footer className="mt-20 pt-8 border-t border-white/5 flex justify-between items-center text-[10px] text-gray-600 uppercase tracking-widest font-bold">
-          <p>© 2026 DraftOps Autonomous Systems</p>
-          <div className="flex gap-6">
-            <span className="flex items-center gap-1.5"><div className="w-1 h-1 bg-blue-500 rounded-full"></div> Supabase Sync</span>
-            <span className="flex items-center gap-1.5"><div className="w-1 h-1 bg-purple-500 rounded-full"></div> LangGraph RCA</span>
+              ))
+            )}
           </div>
-        </footer>
-      </div>
+          
+        </div>
+      </main>
     </div>
   );
 }
 
-function StatCard({ label, value, sub, color = "text-white" }) {
+function NavItem({ icon, label, isActive, onClick, badge }) {
   return (
-    <div className="group relative overflow-hidden bg-white/[0.03] backdrop-blur-md p-8 rounded-[2rem] border border-white/5 hover:border-white/10 transition-all duration-500 hover:-translate-y-1">
-      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-        <div className="w-20 h-20 bg-white rounded-full"></div>
+    <div 
+      onClick={onClick}
+      className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors ${
+        isActive ? "bg-[#1f1f1f] text-gray-100" : "text-gray-500 hover:bg-[#111] hover:text-gray-300"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={icon}></path>
+        </svg>
+        <span className="text-sm font-medium">{label}</span>
       </div>
-      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">{label}</p>
-      <p className={`text-5xl font-outfit font-black tracking-tighter mb-2 ${color}`}>{value}</p>
-      <p className="text-xs text-gray-600 font-medium">{sub}</p>
+      {badge && (
+        <span className="bg-red-500/20 text-red-500 border border-red-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+          {badge}
+        </span>
+      )}
     </div>
   );
 }
 
-function IncidentCard({ incident, isExpanded, onToggle }) {
+function IncidentRow({ incident, isExpanded, onToggle }) {
   const isP1 = incident.severity === "P1";
   
   return (
-    <div className={`group relative overflow-hidden rounded-[2.5rem] border transition-all duration-500 ${
-      isExpanded ? "ring-2 ring-blue-500/20 bg-white/[0.04]" : "bg-white/[0.02] hover:bg-white/[0.04]"
-    } ${isP1 ? "border-red-500/10 hover:border-red-500/30" : "border-white/5 hover:border-white/10"}`}>
+    <div className="bg-[#0f0f0f] border border-[#222] rounded-xl relative overflow-hidden transition-all hover:border-[#333]">
+      {/* Left Stripe */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isP1 ? "bg-red-500" : "bg-yellow-500"}`}></div>
       
-      {/* Accent strip */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isP1 ? "bg-red-500" : "bg-blue-500"}`}></div>
-
-      <div className="p-8 md:p-10">
-        <div className="flex flex-wrap justify-between items-start gap-6 mb-8">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <h3 className="text-2xl font-outfit font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
-                {incident.service}
-              </h3>
-              <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                isP1 ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-              }`}>
-                {incident.severity}
-              </div>
-              {incident.incident_type && incident.incident_type !== "unknown" && (
-                <div className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-white/5 text-gray-400 border border-white/5">
-                  {incident.incident_type.replace(/_/g, " ")}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-              <span className="flex items-center gap-1.5">
-                <span className="text-blue-500/50">#</span> {incident.id.toString().slice(-6)}
+      <div className="p-5 ml-1">
+        {/* Top Row */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+          <div className="flex items-center gap-3">
+            <span className="font-semibold text-white tracking-tight">{incident.service}</span>
+            
+            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
+              isP1 
+                ? "bg-[#ff000020] text-red-400 border-red-500/30" 
+                : "bg-[#ffff0020] text-yellow-400 border-yellow-500/30"
+            }`}>
+              {incident.severity}
+            </span>
+            
+            {incident.incident_type && incident.incident_type !== "unknown" && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-[#ffffff10] text-gray-300 border border-transparent">
+                {incident.incident_type.replace(/_/g, " ")}
               </span>
-              <span>•</span>
-              <span>{new Date(incident.triggered_at).toLocaleString(undefined, { 
-                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit'
-              })}</span>
-            </div>
+            )}
           </div>
-
-          {incident.needs_escalation && (
-            <div className="animate-pulse flex items-center gap-2 px-6 py-2.5 bg-red-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(239,68,68,0.4)]">
-              <span>⚠</span> Critical Escalation
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <div className="p-6 bg-white/[0.03] rounded-3xl border border-white/5 shadow-inner">
-            <p className="text-xl font-medium leading-relaxed text-gray-100">
-              {incident.probable_cause}
-            </p>
-          </div>
-
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 font-bold shrink-0">
-                →
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Recommended Action</p>
-                <p className="text-gray-400 font-medium">{incident.recommended_action}</p>
-              </div>
-            </div>
-
-            <button 
-              onClick={onToggle}
-              className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
-                isExpanded 
-                  ? "bg-white text-black hover:bg-gray-200" 
-                  : "bg-white/5 text-white hover:bg-white/10 border border-white/5"
-              }`}
-            >
-              {isExpanded ? "Close Report" : "Technical RCA"}
-            </button>
+          
+          <div className="text-xs text-gray-500 font-medium">
+            {new Date(incident.triggered_at).toLocaleString(undefined, { 
+              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            })}
           </div>
         </div>
 
-        {/* Technical Detail Section */}
+        {/* Content */}
+        <div className="mb-4">
+          <p className="text-[16px] text-white leading-snug mb-1.5">{incident.probable_cause}</p>
+          <p className="text-[14px] text-[#888] flex items-start gap-2">
+            <span className="text-gray-600 shrink-0 select-none">↳</span> 
+            {incident.recommended_action}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div>
+          <button 
+            onClick={onToggle}
+            className="text-xs font-medium text-gray-400 hover:text-white flex items-center gap-1.5 transition-colors bg-[#1a1a1a] px-3 py-1.5 rounded-md border border-[#333] hover:border-[#444]"
+          >
+            <svg className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            {isExpanded ? "Hide reasoning" : "View reasoning"}
+          </button>
+        </div>
+
+        {/* Expanded Content */}
         {isExpanded && (
-          <div className="mt-10 pt-10 border-t border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                  <span className="w-1 h-1 bg-purple-500 rounded-full"></span> Diagnostic Reasoning
-                </p>
-                <div className="space-y-4 text-gray-400 text-sm leading-relaxed font-medium">
-                  {incident.reasoning.split('. ').map((sentence, idx) => (
-                    sentence && <p key={idx} className="flex gap-3"><span className="text-gray-800 shrink-0">0{idx+1}</span> {sentence}.</p>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-[#050505] rounded-3xl p-8 border border-white/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="text-4xl font-black italic tracking-tighter">AI</span>
-                </div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-6">Autonomous Triage</p>
-                <div className="space-y-4 font-mono text-[11px]">
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-600">Model:</span>
-                    <span className="text-blue-400">LLAMA-3.3-70B</span>
-                  </div>
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-600">Confidence:</span>
-                    <span className="text-green-500">{incident.confidence?.toUpperCase() || "HIGH"}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-white/5 pb-2">
-                    <span className="text-gray-600">Context Size:</span>
-                    <span className="text-gray-400">1.2k tokens</span>
-                  </div>
-                </div>
-              </div>
+          <div className="mt-4 pt-4 border-t border-[#222]">
+            <h4 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">Diagnostic Reasoning</h4>
+            <div className="text-sm text-gray-400 leading-relaxed bg-[#141414] p-4 rounded-lg border border-[#222]">
+              {incident.reasoning}
             </div>
           </div>
         )}
       </div>
+
+      {/* Escalation Banner */}
+      {incident.needs_escalation && (
+        <div className="bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent border-t border-red-500/20 px-5 py-2.5 ml-1 flex items-center gap-2">
+          <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <span className="text-xs font-semibold text-red-500 tracking-wide uppercase">Escalation Required</span>
+        </div>
+      )}
     </div>
   );
 }
