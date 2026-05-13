@@ -517,7 +517,7 @@ Next.js dashboard: `.env.local` file
 
 ### CV Line
 
-> **Project Pulse — AIOps Incident Response Agent**  
+> **DraftOps — AIOps Incident Response Agent**  
 > Autonomous agent that monitors system metrics, performs root cause analysis, and executes response actions (GitHub issue creation, Slack alerts, human-in-the-loop escalation) via MCP tool calling. Features automatic LLM fallback architecture (Groq llama-3.3-70b → Gemini 2.5 Flash). Built with LangGraph, Groq API, Gemini API, Supabase, and GitHub/Slack MCP integrations.
 
 ### What to Say in Interviews
