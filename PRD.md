@@ -116,9 +116,9 @@ Dashboard updates with new incident
 | Memory + storage | Supabase (PostgreSQL) | Incidents table, past incident retrieval |
 | GitHub integration | GitHub MCP | Auto issue creation |
 | Slack integration | Slack MCP | Webhook-based alerts |
-| Frontend dashboard | Next.js + Tailwind CSS | Dark theme, real-time incident feed |
-| Mock data | JSON files | Simulated logs, no real server needed |
-| Backend language | Python | All agent logic |
+| Frontend dashboard | Next.js + Tailwind CSS | Light theme (Claude aesthetic), real-time incident feed |
+| Log Ingestion API | FastAPI | Running on Railway, receives POST payloads |
+| Backend language | Python | All agent logic + ingestion API |
 | Package management | pip + .env | Environment-based config |
 
 ---
@@ -176,33 +176,30 @@ Dashboard updates with new incident
 
 ---
 
-### Component 1 — Mock Log Generator
-**File:** `mock_log_generator.py`  
-**Job:** Generate realistic fake system logs as JSON. No real server needed.  
-**Output:** `mock_logs.json` — 50 log entries  
-**Services simulated:** `auth-service`, `payment-service`, `api-gateway`  
-**Modes:**
-- Normal: healthy baseline metrics
-- Incident: one service degrading with realistic spike pattern over 5 minutes
+### Component 1 — Ingestion API
+**File:** `ingest_api.py`  
+**Job:** Accept incoming real-time logs via REST API and store them in Supabase.  
+**Output:** Inserts rows into `live_logs` table in Supabase.  
+**Endpoint:** `POST /ingest`
 
-**Each log entry fields:**
+**Payload Schema (LogEntry):**
 
 | Field | Type | Description |
 |---|---|---|
 | timestamp | ISO string | Log timestamp |
 | service | string | Which microservice |
 | level | INFO / WARN / ERROR | Log severity |
-| message | string | Realistic error message |
-| cpu_usage | 0–100 | CPU % |
-| memory_usage | 0–100 | Memory % |
-| error_rate | 0–100 | Failing requests/sec |
-| latency_ms | integer | Response time in ms |
+| message | string | Error message |
+| cpu_usage | float (optional) | CPU % (defaults to 0) |
+| memory_usage | float (optional) | Memory % (defaults to 0) |
+| error_rate | float (optional) | Failing requests/sec (defaults to 0) |
+| latency_ms | float (optional) | Response time in ms (defaults to 0) |
 
 ---
 
 ### Component 2 — Anomaly Detector
 **File:** `anomaly_detector.py`  
-**Job:** Read `mock_logs.json`, apply threshold rules, return alerts.  
+**Job:** Read recent logs from Supabase `live_logs`, apply threshold rules, return alerts.  
 **No LLM used here** — pure rule-based logic.
 
 **Alert rules:**
@@ -314,7 +311,7 @@ Dashboard updates with new incident
 
 ### Component 7 — Main Orchestrator
 **File:** `agent.py`  
-**Job:** Wire all components into a LangGraph StateGraph.  
+**Job:** Wire all components into a LangGraph StateGraph and run via `APScheduler` (every 2 minutes).  
 **Handles:** `LLMUnavailableError` gracefully — logs and ends pipeline without crashing.
 
 **State:** TypedDict containing current alert, noise filter result, past incidents, RCA result, and action results passed between nodes.
@@ -324,14 +321,14 @@ Dashboard updates with new incident
 ### Component 8 — Dashboard
 **File:** Next.js — `app/page.js`  
 **Job:** Display real-time incident feed from Supabase.  
-**Theme:** Dark (black/dark grey)
+**Theme:** Light (Claude-inspired minimal aesthetic, strict Mono font, high typographic contrast).
 
 **UI Sections:**
 
 | Section | Content |
 |---|---|
-| Header | "Project Pulse — AIOps Dashboard" |
-| Stats row | Total Incidents · P1 Count · Services Affected |
+| Header | "DraftOps" branding + Supabase status |
+| Stats row | Real-time calculations: Live Incidents, P1 Count, Affected Services, Latest Incident Time |
 | Incident cards | Newest first, full incident detail |
 
 **Per card:**
@@ -406,6 +403,22 @@ All prompts follow these principles:
 
 ## 11. Data Schema
 
+### Supabase — `live_logs` table (Ingestion)
+
+```sql
+CREATE TABLE live_logs (
+  id BIGSERIAL PRIMARY KEY,
+  timestamp TIMESTAMPTZ NOT NULL,
+  service TEXT NOT NULL,
+  level TEXT NOT NULL,
+  message TEXT NOT NULL,
+  cpu_usage FLOAT DEFAULT 0,
+  memory_usage FLOAT DEFAULT 0,
+  error_rate FLOAT DEFAULT 0,
+  latency_ms FLOAT DEFAULT 0
+);
+```
+
 ### Supabase — `incidents` table
 
 ```sql
@@ -439,6 +452,8 @@ GEMINI_API_KEY=your_gemini_api_key
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_KEY=your_supabase_anon_key
+LOG_SOURCE=supabase
+
 
 # GitHub
 GITHUB_TOKEN=your_github_personal_access_token
@@ -457,7 +472,8 @@ Next.js dashboard: `.env.local` file
 
 ### In Scope ✅
 
-- Mock log and metrics ingestion (JSON files)
+- FastAPI log ingestion via POST requests
+- Supabase persistent storage for live logs and incidents
 - Threshold-based anomaly detection (rule engine)
 - LLM-powered noise filtering
 - LLM-powered root cause analysis with memory
