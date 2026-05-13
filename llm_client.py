@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from groq import Groq
-import google.generativeai as genai
+from google import genai
 
 load_dotenv()
 
@@ -25,12 +25,14 @@ def call_llm(system_prompt, user_message):
     except Exception as e:
         print(f"Groq failed: {e}. Switching to Gemini.")
 
-    # Step 2: Try Gemini Fallback
+    # Step 2: Try Gemini Fallback (using new google-genai SDK)
     try:
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         combined_prompt = f"System:\n{system_prompt}\n\nUser:\n{user_message}"
-        response = model.generate_content(combined_prompt)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=combined_prompt
+        )
         return response.text
     except Exception as e:
         # Step 3: Both failed
