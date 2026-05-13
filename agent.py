@@ -1,7 +1,9 @@
 import os
+import time
 from typing import TypedDict, List, Dict, Any, Optional
 from langgraph.graph import StateGraph, START, END
 from dotenv import load_dotenv
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 load_dotenv()
 
@@ -101,7 +103,8 @@ builder.add_edge("execute_actions", END)
 
 graph = builder.compile()
 
-if __name__ == "__main__":
+def run_pipeline():
+    print(f"\n--- Starting Pipeline Run at {time.strftime('%H:%M:%S')} ---")
     initial_state = {
         "alerts": [],
         "current_alert": None,
@@ -114,7 +117,26 @@ if __name__ == "__main__":
     
     try:
         graph.invoke(initial_state)
+        print("Pipeline run complete.")
     except LLMUnavailableError:
         print("LLM unavailable. Pipeline stopped.")
-        
-    print("Pipeline complete")
+    except Exception as e:
+        print(f"Pipeline error: {e}")
+
+if __name__ == "__main__":
+    import sys
+    
+    if "--scheduled" in sys.argv:
+        print("Starting Agent in SCHEDULED mode (every 2 minutes)...")
+        scheduler = BlockingScheduler()
+        # Run once immediately
+        run_pipeline()
+        # Schedule every 2 minutes
+        scheduler.add_job(run_pipeline, 'interval', minutes=2)
+        try:
+            scheduler.start()
+        except (KeyboardInterrupt, SystemExit):
+            pass
+    else:
+        print("Starting Agent in MANUAL mode...")
+        run_pipeline()
