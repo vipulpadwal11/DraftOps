@@ -11,7 +11,7 @@ load_dotenv()
 from anomaly_detector import run_detector
 from noise_filter import filter_noise
 from rca_agent import run_rca
-from memory_store import save_incident, get_past_incidents
+from memory_store import save_incident, get_past_incidents, supabase
 from action_executor import create_github_issue, send_slack_alert
 from llm_client import LLMUnavailableError
 
@@ -26,19 +26,24 @@ class AgentState(TypedDict):
 
 def node_detect_anomalies(state: AgentState):
     log_source = os.getenv("LOG_SOURCE", "mock")
-    source_file = "/tmp/live_logs.json" if log_source == "live" else "mock_logs.json"
+    # We still pass a identifier, but detector now handles the Supabase fetch
+    source_file = "live" if log_source == "live" else "mock_logs.json"
     
     print(f"LOG_SOURCE: {log_source}")
     print(f"Reading from: {source_file}")
     
-    # Get log count for debugging
+    # Get log count for debugging (now from Supabase if live)
     try:
-        if os.path.exists(source_file):
+        if log_source == "live":
+            response = supabase.table("live_logs").select("*", count="exact").limit(1).execute()
+            count = response.count if response.count is not None else 0
+            print(f"Total logs found in Supabase: {count}")
+        elif os.path.exists(source_file):
             with open(source_file, "r") as f:
                 logs_data = json.load(f)
-                print(f"Total logs found: {len(logs_data)}")
+                print(f"Total logs found in JSON: {len(logs_data)}")
         else:
-            print(f"Total logs found: 0 (File does not exist)")
+            print(f"Total logs found: 0 (Source not found)")
     except Exception as e:
         print(f"Error reading log count: {e}")
 

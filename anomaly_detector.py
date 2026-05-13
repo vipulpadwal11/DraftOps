@@ -1,10 +1,28 @@
 import json
+import os
+from memory_store import supabase
 
 def run_detector(source_file="mock_logs.json"):
-    try:
-        with open(source_file, "r") as f:
-            logs = json.load(f)
-    except FileNotFoundError:
+    logs = []
+    
+    if source_file == "live" or source_file == "/tmp/live_logs.json":
+        # Fetch from Supabase live_logs table
+        try:
+            print("Fetching live logs from Supabase...")
+            response = supabase.table("live_logs").select("*").order("created_at", desc=True).limit(100).execute()
+            logs = response.data if response.data else []
+        except Exception as e:
+            print(f"Error fetching from Supabase: {e}")
+            return []
+    else:
+        # Fallback to local JSON file for mock mode
+        try:
+            with open(source_file, "r") as f:
+                logs = json.load(f)
+        except FileNotFoundError:
+            return []
+
+    if not logs:
         return []
 
     services = {}
@@ -14,6 +32,7 @@ def run_detector(source_file="mock_logs.json"):
     alerts = []
 
     for service, s_logs in services.items():
+        # Sort logs by timestamp (DB might return them descending)
         s_logs.sort(key=lambda x: x["timestamp"])
         
         triggered_rules = []
@@ -27,7 +46,7 @@ def run_detector(source_file="mock_logs.json"):
         # cpu_usage > 85 for 3+ consecutive
         consecutive_cpu = 0
         for log in s_logs:
-            if log["cpu_usage"] > 85:
+            if log.get("cpu_usage", 0) > 85:
                 consecutive_cpu += 1
                 if consecutive_cpu == 3:
                     triggered_rules.append("cpu")
@@ -37,14 +56,14 @@ def run_detector(source_file="mock_logs.json"):
 
         # error_rate > 20
         for log in s_logs:
-            if log["error_rate"] > 20:
+            if log.get("error_rate", 0) > 20:
                 triggered_rules.append("error_rate")
                 update_ts(log["timestamp"])
                 break
 
         # latency_ms > 1500
         for log in s_logs:
-            if log["latency_ms"] > 1500:
+            if log.get("latency_ms", 0) > 1500:
                 triggered_rules.append("latency")
                 update_ts(log["timestamp"])
                 break
