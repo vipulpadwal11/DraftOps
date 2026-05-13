@@ -1,0 +1,30 @@
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Node
+node_modules/
+.next/
+out/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Logs and temp files
+live_logs.json
+mock_logs.json
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

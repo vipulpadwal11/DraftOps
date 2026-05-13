@@ -1,0 +1,10 @@
+groq
+google-generativeai
+langchain
+langgraph
+supabase
+PyGithub
+requests
+python-dotenv
+fastapi
+uvicorn
